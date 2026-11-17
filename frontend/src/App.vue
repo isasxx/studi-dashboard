@@ -1,7 +1,8 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import { RouterView } from 'vue-router';
 </script>
 
 <template>
-  <HelloWorld />
+  <!-- Hier zeigt der Router die jeweils aktuelle Seite an -->
+  <RouterView />
 </template>
