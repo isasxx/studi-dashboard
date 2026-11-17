@@ -3,12 +3,14 @@ import { getAuth } from './api';
 import LoginView from './views/LoginView.vue';
 import RegisterView from './views/RegisterView.vue';
 import DashboardView from './views/DashboardView.vue';
+import DecksView from './views/DecksView.vue';
 
 // Alle Seiten der App. "public: true" heißt: auch ohne Anmeldung erreichbar.
 const routes = [
   { path: '/login', component: LoginView, meta: { public: true } },
   { path: '/register', component: RegisterView, meta: { public: true } },
-  { path: '/', component: DashboardView }
+  { path: '/', component: DashboardView },
+  { path: '/decks', component: DecksView }
 ];
 
 const router = createRouter({
