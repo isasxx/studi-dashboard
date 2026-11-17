@@ -87,3 +87,4 @@ if (userCount === 0) {
 }
 
 module.exports = db;
+
