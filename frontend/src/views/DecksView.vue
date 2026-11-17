@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { RouterLink } from 'vue-router';
 import { api } from '../api';
 
 // Liste der Stapel und Fehlermeldung
@@ -140,6 +141,7 @@ onMounted(loadDecks);
               <button type="button" class="secondary" @click="confirmDeleteId = null">Nein</button>
             </template>
             <template v-else>
+              <RouterLink :to="`/learn/${deck.id}`" class="button">Lernen</RouterLink>
               <button type="button" class="secondary" @click="startEdit(deck)">Bearbeiten</button>
               <button type="button" class="secondary" @click="confirmDeleteId = deck.id">Löschen</button>
             </template>

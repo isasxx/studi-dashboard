@@ -20,6 +20,7 @@ function logout() {
     <div class="nav-links">
       <RouterLink to="/">Übersicht</RouterLink>
       <RouterLink to="/decks">Stapel</RouterLink>
+      <RouterLink to="/cards">Karten</RouterLink>
     </div>
     <div class="nav-user">
       <span>{{ user?.name }}</span>
