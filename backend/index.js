@@ -4,6 +4,8 @@ const requireAuth = require('./middleware/auth');
 const authRouter = require('./routes/auth');
 const decksRouter = require('./routes/decks');
 const cardsRouter = require('./routes/cards');
+const modulesRouter = require('./routes/modules');
+const gradesRouter = require('./routes/grades');
 
 const app = express();
 app.use(express.json()); // erlaubt JSON in Anfragen
@@ -12,6 +14,8 @@ app.use(express.json()); // erlaubt JSON in Anfragen
 app.use('/auth', authRouter);
 app.use('/decks', requireAuth, decksRouter);
 app.use('/cards', requireAuth, cardsRouter);
+app.use('/modules', requireAuth, modulesRouter);
+app.use('/grades', requireAuth, gradesRouter);
 
 // Server starten
 app.listen(3000, () => {

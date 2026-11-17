@@ -1,6 +1,7 @@
 const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const moduleCatalog = require('./modules');
 
 /**
  * Verbindung zur SQLite-Datenbank.
@@ -35,7 +36,33 @@ db.exec(`
     difficulty TEXT NOT NULL DEFAULT 'mittel',
     status     TEXT NOT NULL DEFAULT 'neu'
   );
+
+  CREATE TABLE IF NOT EXISTS modules (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    name     TEXT NOT NULL UNIQUE,
+    semester INTEGER NOT NULL,
+    ects     INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS grades (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    moduleId INTEGER NOT NULL REFERENCES modules(id),
+    grade    REAL NOT NULL,
+    attempt  INTEGER NOT NULL DEFAULT 1,
+    date     TEXT,
+    planned  INTEGER NOT NULL DEFAULT 0
+  );
 `);
+
+// Modulkatalog einmalig einlesen (gilt für alle Nutzer)
+const moduleCount = db.prepare('SELECT COUNT(*) AS n FROM modules').get().n;
+if (moduleCount === 0) {
+  const insertModule = db.prepare('INSERT INTO modules (name, semester, ects) VALUES (?, ?, ?)');
+  for (const m of moduleCatalog) {
+    insertModule.run(m.name, m.semester, m.ects);
+  }
+}
 
 // Beispieldaten nur einfügen, wenn die Datenbank noch leer ist.
 // Es gibt einen Demo-Account zum Ausprobieren: demo@example.com / demo1234
