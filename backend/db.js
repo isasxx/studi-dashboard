@@ -48,10 +48,17 @@ db.exec(`
     id       INTEGER PRIMARY KEY AUTOINCREMENT,
     userId   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     moduleId INTEGER NOT NULL REFERENCES modules(id),
-    grade    REAL NOT NULL,
+    grade    REAL,
+    passed   INTEGER NOT NULL,
     attempt  INTEGER NOT NULL DEFAULT 1,
-    date     TEXT,
-    planned  INTEGER NOT NULL DEFAULT 0
+    date     TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS timetables (
+    userId    INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    url       TEXT NOT NULL,
+    ics       TEXT NOT NULL,
+    fetchedAt TEXT NOT NULL
   );
 `);
 
@@ -87,4 +94,3 @@ if (userCount === 0) {
 }
 
 module.exports = db;
-

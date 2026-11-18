@@ -7,16 +7,6 @@ const router = express.Router();
 const VALID_GRADES = [1.0, 1.3, 1.7, 2.0, 2.3, 2.7, 3.0, 3.3, 3.7, 4.0, 5.0];
 
 /**
- * Bestimmt den Status einer Note.
- * @param {object} g - Note mit den Feldern grade und planned
- * @returns {string} 'geplant', 'bestanden' oder 'nicht bestanden'
- */
-function statusOf(g) {
-  if (g.planned) return 'geplant';
-  return g.grade <= 4.0 ? 'bestanden' : 'nicht bestanden';
-}
-
-/**
  * Rundet auf zwei Nachkommastellen.
  * @param {number} x
  * @returns {number}
@@ -27,7 +17,7 @@ function round2(x) {
 
 /**
  * Berechnet den ECTS-gewichteten Durchschnitt.
- * @param {Array<{grade: number, ects: number}>} entries
+ * @param {Array<{grade: number, ects: number}>} entries - nur benotete Einträge
  * @returns {number|null} Durchschnitt, oder null wenn es keine Einträge gibt
  */
 function weightedAverage(entries) {
@@ -38,22 +28,35 @@ function weightedAverage(entries) {
 }
 
 /**
- * Prüft die Eingaben für eine Note.
+ * Prüft die Eingaben für eine Note und bereitet sie zum Speichern auf.
+ * Erlaubt sind entweder eine Note (grade) oder – für unbenotete Module –
+ * grade: null zusammen mit passed: true/false.
  * @param {object} body - die mitgeschickten Daten
- * @returns {string|null} Fehlermeldung, oder null wenn alles passt
+ * @returns {{error: string} | {grade: number|null, passed: number}}
  */
-function validateGrade(body) {
+function parseGrade(body) {
   const module = db.prepare('SELECT id FROM modules WHERE id = ?').get(Number(body.moduleId));
   if (!module) {
-    return 'Modul existiert nicht';
-  }
-  if (!VALID_GRADES.includes(Number(body.grade))) {
-    return 'grade muss eine gültige Note sein (1.0, 1.3, … 4.0 oder 5.0)';
+    return { error: 'Modul existiert nicht' };
   }
   if (body.attempt !== undefined && !(Number(body.attempt) >= 1 && Number(body.attempt) <= 3)) {
-    return 'attempt muss 1, 2 oder 3 sein';
+    return { error: 'attempt muss 1, 2 oder 3 sein' };
   }
-  return null;
+
+  // Unbenotet: nur bestanden oder nicht bestanden
+  if (body.grade === null || body.grade === undefined) {
+    if (typeof body.passed !== 'boolean') {
+      return { error: 'Ohne Note muss passed (true oder false) angegeben werden' };
+    }
+    return { grade: null, passed: body.passed ? 1 : 0 };
+  }
+
+  // Benotet: Note prüfen, bestanden ergibt sich aus der Note
+  const grade = Number(body.grade);
+  if (!VALID_GRADES.includes(grade)) {
+    return { error: 'grade muss eine gültige Note sein (1.0, 1.3, … 4.0 oder 5.0)' };
+  }
+  return { grade, passed: grade <= 4.0 ? 1 : 0 };
 }
 
 /**
@@ -70,7 +73,12 @@ function loadGrades(userId) {
        ORDER BY modules.semester, modules.name, grades.attempt`
     )
     .all(userId)
-    .map(g => ({ ...g, planned: Boolean(g.planned), status: statusOf(g) }));
+    .map(g => ({
+      ...g,
+      passed: Boolean(g.passed),
+      graded: g.grade !== null,
+      status: g.passed ? 'bestanden' : 'nicht bestanden'
+    }));
 }
 
 /**
@@ -86,7 +94,7 @@ router.get('/', (req, res) => {
 });
 
 /**
- * Liefert die Auswertung: Schnitt, geplanter Schnitt, ECTS-Fortschritt
+ * Liefert die Auswertung: Schnitt, ECTS-Fortschritt
  * und – mit ?target=2.0 – die nötige Durchschnittsnote in den offenen Modulen.
  * GET /grades/summary?target=2.0
  */
@@ -94,12 +102,10 @@ router.get('/summary', (req, res) => {
   const grades = loadGrades(req.user.id);
   const modules = db.prepare('SELECT * FROM modules').all();
 
-  // Pro Modul zählt die bestandene Note (es gibt höchstens eine)
-  const passed = grades.filter(g => g.status === 'bestanden');
+  // Bestandene Module zählen für die ECTS, in den Schnitt gehen nur die benoteten
+  const passed = grades.filter(g => g.passed);
+  const passedGraded = passed.filter(g => g.graded);
   const passedIds = new Set(passed.map(g => g.moduleId));
-
-  // Geplante Noten nur für Module, die noch nicht bestanden sind
-  const planned = grades.filter(g => g.status === 'geplant' && !passedIds.has(g.moduleId));
 
   const ectsDone = passed.reduce((sum, g) => sum + g.ects, 0);
   const ectsTotal = modules.reduce((sum, m) => sum + m.ects, 0);
@@ -107,8 +113,7 @@ router.get('/summary', (req, res) => {
   const openEcts = openModules.reduce((sum, m) => sum + m.ects, 0);
 
   const summary = {
-    average: weightedAverage(passed),
-    plannedAverage: weightedAverage([...passed, ...planned]),
+    average: weightedAverage(passedGraded),
     ectsDone,
     ectsTotal,
     progress: ectsTotal > 0 ? round2(ectsDone / ectsTotal) : 0,
@@ -125,8 +130,9 @@ router.get('/summary', (req, res) => {
     if (openEcts === 0) {
       summary.goal = { target, required: null, reachable: summary.average !== null && summary.average <= target };
     } else {
-      const doneSum = passed.reduce((s, g) => s + g.grade * g.ects, 0);
-      const required = round2((target * (ectsDone + openEcts) - doneSum) / openEcts);
+      const gradedEcts = passedGraded.reduce((s, g) => s + g.ects, 0);
+      const doneSum = passedGraded.reduce((s, g) => s + g.grade * g.ects, 0);
+      const required = round2((target * (gradedEcts + openEcts) - doneSum) / openEcts);
       summary.goal = { target, required, reachable: required >= 1.0 };
     }
   }
@@ -136,24 +142,25 @@ router.get('/summary', (req, res) => {
 
 /**
  * Trägt eine Note ein.
- * POST /grades – Body: { moduleId, grade, attempt?, date?, planned? }
+ * POST /grades – Body: { moduleId, grade, attempt?, date? }
+ * Für unbenotete Module: { moduleId, grade: null, passed: true|false, attempt?, date? }
  */
 router.post('/', (req, res) => {
-  const error = validateGrade(req.body);
-  if (error) {
-    return res.status(400).json({ error });
+  const parsed = parseGrade(req.body);
+  if (parsed.error) {
+    return res.status(400).json({ error: parsed.error });
   }
-  const { moduleId, grade, attempt, date, planned } = req.body;
+  const { moduleId, attempt, date } = req.body;
   const info = db
-    .prepare('INSERT INTO grades (userId, moduleId, grade, attempt, date, planned) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(req.user.id, Number(moduleId), Number(grade), Number(attempt) || 1, date ?? null, planned ? 1 : 0);
+    .prepare('INSERT INTO grades (userId, moduleId, grade, passed, attempt, date) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(req.user.id, Number(moduleId), parsed.grade, parsed.passed, Number(attempt) || 1, date ?? null);
   const created = loadGrades(req.user.id).find(g => g.id === info.lastInsertRowid);
   res.status(201).json(created);
 });
 
 /**
  * Ändert eine Note.
- * PUT /grades/:id – Body: { moduleId, grade, attempt?, date?, planned? }
+ * PUT /grades/:id – Body wie bei POST
  */
 router.put('/:id', (req, res) => {
   const id = Number(req.params.id);
@@ -161,14 +168,14 @@ router.put('/:id', (req, res) => {
   if (!existing) {
     return res.status(404).json({ error: 'Note nicht gefunden' });
   }
-  const error = validateGrade(req.body);
-  if (error) {
-    return res.status(400).json({ error });
+  const parsed = parseGrade(req.body);
+  if (parsed.error) {
+    return res.status(400).json({ error: parsed.error });
   }
-  const { moduleId, grade, attempt, date, planned } = req.body;
+  const { moduleId, attempt, date } = req.body;
   db.prepare(
-    'UPDATE grades SET moduleId = ?, grade = ?, attempt = ?, date = ?, planned = ? WHERE id = ?'
-  ).run(Number(moduleId), Number(grade), Number(attempt) || existing.attempt, date ?? existing.date, planned ? 1 : 0, id);
+    'UPDATE grades SET moduleId = ?, grade = ?, passed = ?, attempt = ?, date = ? WHERE id = ?'
+  ).run(Number(moduleId), parsed.grade, parsed.passed, Number(attempt) || existing.attempt, date ?? existing.date, id);
   res.json(loadGrades(req.user.id).find(g => g.id === id));
 });
 

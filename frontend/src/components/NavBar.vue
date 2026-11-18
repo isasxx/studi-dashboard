@@ -19,8 +19,10 @@ function logout() {
     <RouterLink to="/" class="brand">Studi-Dashboard</RouterLink>
     <div class="nav-links">
       <RouterLink to="/">Übersicht</RouterLink>
+      <RouterLink to="/timetable">Stundenplan</RouterLink>
       <RouterLink to="/decks">Stapel</RouterLink>
       <RouterLink to="/cards">Karten</RouterLink>
+      <RouterLink to="/grades">Noten</RouterLink>
     </div>
     <div class="nav-user">
       <span>{{ user?.name }}</span>

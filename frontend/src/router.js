@@ -7,6 +7,10 @@ import DecksView from './views/DecksView.vue';
 import CardsView from './views/CardsView.vue';
 import CardFormView from './views/CardFormView.vue';
 import LearnView from './views/LearnView.vue';
+import GradesView from './views/GradesView.vue';
+import GradeFormView from './views/GradeFormView.vue';
+import GoalView from './views/GoalView.vue';
+import TimetableView from './views/TimetableView.vue';
 
 // Alle Seiten der App. "public: true" heißt: auch ohne Anmeldung erreichbar.
 const routes = [
@@ -17,7 +21,12 @@ const routes = [
   { path: '/cards', component: CardsView },
   { path: '/cards/new', component: CardFormView },
   { path: '/cards/:id/edit', component: CardFormView },
-  { path: '/learn/:deckId', component: LearnView }
+  { path: '/learn/:deckId', component: LearnView },
+  { path: '/grades', component: GradesView },
+  { path: '/grades/new', component: GradeFormView },
+  { path: '/grades/:id/edit', component: GradeFormView },
+  { path: '/grades/goal', component: GoalView },
+  { path: '/timetable', component: TimetableView }
 ];
 
 const router = createRouter({
