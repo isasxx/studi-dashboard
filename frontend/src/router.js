@@ -11,6 +11,7 @@ import GradesView from './views/GradesView.vue';
 import GradeFormView from './views/GradeFormView.vue';
 import GoalView from './views/GoalView.vue';
 import TimetableView from './views/TimetableView.vue';
+import CampusView from './views/CampusView.vue';
 
 // Alle Seiten der App. "public: true" heißt: auch ohne Anmeldung erreichbar.
 const routes = [
@@ -26,7 +27,8 @@ const routes = [
   { path: '/grades/new', component: GradeFormView },
   { path: '/grades/:id/edit', component: GradeFormView },
   { path: '/grades/goal', component: GoalView },
-  { path: '/timetable', component: TimetableView }
+  { path: '/timetable', component: TimetableView },
+  { path: '/campus', component: CampusView }
 ];
 
 const router = createRouter({

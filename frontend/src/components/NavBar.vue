@@ -20,6 +20,7 @@ function logout() {
     <div class="nav-links">
       <RouterLink to="/">Übersicht</RouterLink>
       <RouterLink to="/timetable">Stundenplan</RouterLink>
+      <RouterLink to="/campus">Campus</RouterLink>
       <RouterLink to="/decks">Stapel</RouterLink>
       <RouterLink to="/cards">Karten</RouterLink>
       <RouterLink to="/grades">Noten</RouterLink>

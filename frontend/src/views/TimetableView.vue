@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { RouterLink } from 'vue-router';
 import { api } from '../api';
+import { campusLink } from '../campus';
 
 // Höhe einer Stunde im Wochenraster (Pixel)
 const HOUR_HEIGHT = 60;
@@ -379,7 +381,8 @@ onUnmounted(() => {
             >
               <strong class="tt-title">{{ event.title }}</strong>
               <span>{{ formatTime(event.start) }} – {{ formatTime(event.end) }}</span>
-              <span>{{ event.room }}</span>
+              <RouterLink v-if="campusLink(event.room)" :to="campusLink(event.room)" class="room-link">{{ event.room }}</RouterLink>
+              <span v-else>{{ event.room }}</span>
               <span v-if="event.note" class="tt-note">{{ event.note }}</span>
             </div>
           </div>
@@ -402,7 +405,9 @@ onUnmounted(() => {
               <div>
                 <strong>{{ event.title }}</strong>
                 <div class="muted">
-                  {{ [event.lecturer, event.room].filter(Boolean).join(' · ') }}
+                  {{ event.lecturer }}<template v-if="event.lecturer && event.room"> · </template>
+                  <RouterLink v-if="campusLink(event.room)" :to="campusLink(event.room)" class="room-link">{{ event.room }}</RouterLink>
+                  <template v-else>{{ event.room }}</template>
                 </div>
                 <div class="tags">
                   <span v-if="event.type" class="tag" :title="TYPE_LABELS[event.type] || ''">{{ event.type }}</span>
