@@ -660,129 +660,95 @@ button.link:hover {
 }
 
 /* Campusplan */
-.campus-info {
-  margin: 0 0 16px;
+.campus-address {
+  margin: -8px 0 16px;
 }
 
 .campus-map {
   padding: 8px;
 }
 
-.campus-map svg {
+/* Auf dem Handy bleibt der Plan lesbar groß und lässt sich seitlich schieben */
+.campus-scroll {
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+.plan {
+  position: relative;
+  min-width: 720px;
+}
+
+.plan img {
   display: block;
   width: 100%;
   height: auto;
 }
 
-.campus-map .ground {
-  fill: #ffffff;
+.plan svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.campus-map .street {
-  fill: #e0ddd8;
-}
-
-.campus-map .street-label {
-  font-size: 15px;
-  fill: var(--muted);
-  text-anchor: middle;
-  font-style: italic;
-}
-
-.campus-map .map-note {
-  font-size: 13px;
-  fill: var(--muted);
-}
-
-.campus-map .stop circle {
-  fill: #f5d90a;
-  stroke: #2f855a;
-  stroke-width: 2;
-}
-
-.campus-map .stop text,
-.campus-map .parking text {
-  font-size: 11px;
-  font-weight: 700;
-  text-anchor: middle;
-}
-
-.campus-map .stop text {
-  fill: #2f855a;
-}
-
-.campus-map .parking rect {
-  fill: #1c8ed6;
-}
-
-.campus-map .parking text {
-  fill: #ffffff;
-  font-size: 14px;
-}
-
-.campus-map .other {
-  fill: #e6e3de;
-}
-
-.campus-map .connector {
-  fill: #e8a3ae;
-}
-
-.campus-map .building {
+.plan .building {
   cursor: pointer;
   outline: none;
 }
 
-.campus-map .building polygon {
-  fill: #e8a3ae;
-  stroke: #ffffff;
-  stroke-width: 2;
+.plan .building .tag {
+  fill: #ffffff;
+  stroke: var(--accent);
+  stroke-width: 6;
   transition: fill 0.2s;
 }
 
-.campus-map .building circle {
-  fill: #ffffff;
-}
-
-.campus-map .building text {
-  font-size: 15px;
-  font-weight: 700;
+.plan .building text {
+  font-size: 42px;
+  font-weight: 800;
   fill: var(--accent);
   text-anchor: middle;
   pointer-events: none;
 }
 
-.campus-map .building:hover polygon,
-.campus-map .building:focus-visible polygon {
-  fill: #d9677a;
+.plan .building:hover .tag,
+.plan .building:focus-visible .tag {
+  fill: #fde8eb;
 }
 
-.campus-map .building.selected polygon {
-  fill: var(--accent);
-  animation: pulse 1.6s ease-in-out infinite;
+.plan .building.selected .tag {
+  fill: #1c1b19;
+  stroke: #ffffff;
+  stroke-width: 8;
 }
 
-.campus-map .building.dimmed polygon {
-  fill: #f1d3d8;
+.plan .building.selected text {
+  fill: #ffffff;
 }
 
-@keyframes pulse {
-  50% {
-    fill: #e2475f;
+.plan .halo {
+  fill: none;
+  stroke: #1c1b19;
+  stroke-width: 12;
+  animation: halo 1.6s ease-out infinite;
+}
+
+@keyframes halo {
+  from {
+    r: 60px;
+    opacity: 0.9;
+  }
+  to {
+    r: 140px;
+    opacity: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .campus-map .building.selected polygon {
+  .plan .halo {
     animation: none;
   }
-}
-
-.building-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
 }
 
 .room-link {

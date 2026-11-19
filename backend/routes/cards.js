@@ -120,7 +120,7 @@ router.post('/', (req, res) => {
 });
 
 /**
- * Ändert eine Karte (z. B. Lernstatus im Lernmodus).
+ * Ändert eine Karte
  * PUT /cards/:id – Body: { deckId, question, answer, difficulty?, status? }
  */
 router.put('/:id', (req, res) => {
